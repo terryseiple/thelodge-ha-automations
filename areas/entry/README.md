@@ -1,6 +1,35 @@
 # Entry Area
 
-The main entry/foyer of TheLodge. Contains four Aqara ceiling lights (Matter), a Zooz Z-Wave switch, two Zooz Z-Wave remotes, and a Fibaro motion sensor.
+The main entry/foyer of TheLodge. Contains four Aqara ceiling lights (Matter), a Zooz Z-Wave switch, two Zooz Z-Wave remotes, a Fibaro motion sensor, and an ecobee thermostat.
+
+---
+
+## Climate
+
+### Entry Thermostat — `climate.entry`
+
+| Property | Value |
+|---|---|
+| **Device** | ecobee ECB501 |
+| **Protocol** | HomeKit Controller |
+| **Manufacturer** | ecobee Inc. |
+| **Serial** | 421883660639 |
+| **Firmware** | v4.10.80256 |
+| **Area** | Entry |
+| **Network Name** | Amazon-Smart-Thermostat.thelodge.network |
+
+**Capabilities:**
+
+| Feature | Value |
+|---|---|
+| **HVAC Modes** | off, heat, cool, heat_cool |
+| **Temp Range** | 45°F – 92°F |
+| **Humidity Range** | 20% – 50% |
+| **Fan Modes** | on, auto |
+
+**Labels:** thermostat, homekit_device, motion_sensor, temperature_sensor, humidity_sensor
+
+> **Note:** The ecobee also has built-in motion, temperature, and humidity sensors exposed via HomeKit. The device is registered under the Entry area but the entity `climate.entry` was previously unassigned — now corrected.
 
 ---
 
