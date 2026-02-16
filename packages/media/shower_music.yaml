@@ -1,0 +1,169 @@
+# ============================================================================
+# Master Bathroom Shower Music System
+# ============================================================================
+#
+# WHAT IT DOES:
+#   When the master bathroom shower switch turns on, this automation:
+#   1. Turns on the ceiling exhaust fan
+#   2. Mutes all other audio zones in the house
+#   3. Sets the master bathroom zone to 25% volume
+#   4. Sets the WiiM Ultra to 80% volume with shuffle enabled
+#   5. Plays a curated M3U playlist from the Jukebox server
+#
+#   When the shower switch turns off:
+#   1. Starts a 10-minute timer (music keeps playing)
+#   2. After 10 minutes: stops playback, turns off fan, resets zone volume
+#
+# SIGNAL CHAIN:
+#   Jukebox Server (nginx @ 10.0.101.52)
+#     → M3U playlist served over HTTP
+#       → WiiM Ultra (LinkPlay @ 10.0.102.31)
+#         → Analog out to HTD Lync 12 Zone Amp
+#           → Master Bathroom ceiling speakers
+#
+# COMPONENTS:
+#   Trigger:    switch.master_bathroom_shower (Zigbee/Z-Wave switch)
+#   Fan:        switch.master_bathroom_relay (ceiling exhaust fan)
+#   Audio:      WiiM Ultra via LinkPlay REST API (HTTPS)
+#   Amp Zones:  HTD Lync 12 via media_player entities (Juke integration)
+#   Playlist:   http://10.0.101.52/shower.m3u (nginx on jukebox-server container)
+#
+# DEPENDENCIES:
+#   - Jukebox Server container (10.0.101.52) serving /shower.m3u
+#   - WiiM Ultra reachable at 10.0.102.31 (HTTPS, self-signed cert)
+#   - HTD Lync zone media_player entities registered in HA
+#   - Master bathroom switch and relay entities in HA
+#
+# ============================================================================
+
+# --- REST Commands ---
+rest_command:
+  wiim_play_playlist:
+    url: "https://10.0.102.31/httpapi.asp?command=setPlayerCmd:play:{{ url }}"
+    method: GET
+    verify_ssl: false
+
+  wiim_stop:
+    url: "https://10.0.102.31/httpapi.asp?command=setPlayerCmd:stop"
+    method: GET
+    verify_ssl: false
+
+  wiim_set_loop_shuffle:
+    url: "https://10.0.102.31/httpapi.asp?command=setPlayerCmd:loopmode:2"
+    method: GET
+    verify_ssl: false
+
+  wiim_set_volume:
+    url: "https://10.0.102.31/httpapi.asp?command=setPlayerCmd:vol:{{ volume }}"
+    method: GET
+    verify_ssl: false
+
+# --- Timer ---
+timer:
+  shower_music_delay:
+    name: "Shower Music Stop Delay"
+    duration: "00:10:00"
+
+# --- Automations ---
+automation:
+  # ---- SHOWER ON ----
+  - id: shower_music_start
+    alias: "Shower Music - Start"
+    description: "When shower switch turns on: mute other zones, set bathroom volume, play on WiiM, turn on fan"
+    trigger:
+      - platform: state
+        entity_id: switch.master_bathroom_shower
+        to: "on"
+    action:
+      # Cancel any pending stop timer
+      - service: timer.cancel
+        target:
+          entity_id: timer.shower_music_delay
+
+      # Turn on ceiling fan
+      - service: switch.turn_on
+        target:
+          entity_id: switch.master_bathroom_relay
+
+      # Mute all zones except Master Bathroom
+      - service: media_player.volume_set
+        target:
+          entity_id:
+            - media_player.the_lodge_juke_master_bedroom_zone
+            - media_player.the_lodge_juke_ready_room_zone
+            - media_player.the_lodge_juke_front_patio_zone
+            - media_player.the_lodge_juke_kitchen_zone
+            - media_player.the_lodge_juke_living_room_zone
+            - media_player.the_lodge_juke_garage_zone
+        data:
+          volume_level: 0
+
+      # Set Master Bathroom zone to 25%
+      - service: media_player.volume_set
+        target:
+          entity_id: media_player.the_lodge_juke_master_bathroom_zone
+        data:
+          volume_level: 0.25
+
+      # Set WiiM volume to 80%
+      - service: rest_command.wiim_set_volume
+        data:
+          volume: 80
+
+      - delay:
+          milliseconds: 500
+
+      # Set shuffle mode on WiiM
+      - service: rest_command.wiim_set_loop_shuffle
+
+      - delay:
+          milliseconds: 300
+
+      # Play the playlist on WiiM
+      - service: rest_command.wiim_play_playlist
+        data:
+          url: "http://10.0.101.52/shower.m3u"
+
+    mode: single
+
+  # ---- SHOWER OFF ----
+  - id: shower_music_stop_delay
+    alias: "Shower Music - Start Stop Timer"
+    description: "When shower switch turns off: start 10-minute timer before stopping music and fan"
+    trigger:
+      - platform: state
+        entity_id: switch.master_bathroom_shower
+        to: "off"
+    action:
+      - service: timer.start
+        target:
+          entity_id: timer.shower_music_delay
+        data:
+          duration: "00:10:00"
+    mode: single
+
+  # ---- TIMER FINISHED ----
+  - id: shower_music_stop_execute
+    alias: "Shower Music - Stop After Timer"
+    description: "When 10-minute timer finishes: stop WiiM, turn off fan"
+    trigger:
+      - platform: event
+        event_type: timer.finished
+        event_data:
+          entity_id: timer.shower_music_delay
+    action:
+      # Stop WiiM playback
+      - service: rest_command.wiim_stop
+
+      # Turn off ceiling fan
+      - service: switch.turn_off
+        target:
+          entity_id: switch.master_bathroom_relay
+
+      # Reset Master Bathroom zone volume
+      - service: media_player.volume_set
+        target:
+          entity_id: media_player.the_lodge_juke_master_bathroom_zone
+        data:
+          volume_level: 0
+    mode: single
