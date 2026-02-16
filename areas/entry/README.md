@@ -1,245 +1,113 @@
 # Entry Area
 
-The main entry/foyer of TheLodge. Contains four Aqara ceiling lights (Matter), a Zooz Z-Wave switch, two Zooz Z-Wave remotes, a Fibaro motion sensor, and an ecobee thermostat.
+Main entryway with motion-activated staggered lighting, dual door contact sensors, ecobee climate control, and Ring doorbell.
 
----
+## Devices & Entities
 
-## Climate
+### Lights
 
-### Entry Thermostat — `climate.entry`
+**Aqara Colorful Ceiling Light 36W** (Matter, x2)  
+Each fixture exposes two light entities via Matter — one for color temperature (white channel) and one for HS color (accent channel).
 
-| Property | Value |
-|---|---|
-| **Device** | ecobee ECB501 |
-| **Protocol** | HomeKit Controller |
-| **Manufacturer** | ecobee Inc. |
-| **Serial** | 421883660639 |
-| **Firmware** | v4.10.80256 |
-| **Area** | Entry |
-| **Network Name** | Amazon-Smart-Thermostat.thelodge.network |
+| Entity ID | Mode | Range | Device |
+|-----------|------|-------|--------|
+| `light.entry_ceiling_north` | color_temp | 2702K–6535K | Serial: 54ef441000c0a6cd, FW: v26 |
+| `light.entry_ceiling_north_accent` | hs (RGB) | Full color via `rgb_color` | Same device (accent channel) |
+| `light.entry_ceiling_south` | color_temp | 2702K–6535K | Serial: 54ef441000cbd63e, FW: v26 |
+| `light.entry_ceiling_south_accent` | hs (RGB) | Full color via `rgb_color` | Same device (accent channel) |
 
-**Capabilities:**
+**Light Group:**
+- `light.entry_light_group` — Contains all 4 ceiling light entities
 
-| Feature | Value |
-|---|---|
-| **HVAC Modes** | off, heat, cool, heat_cool |
-| **Temp Range** | 45°F – 92°F |
-| **Humidity Range** | 20% – 50% |
-| **Fan Modes** | on, auto |
+> **Aqara Matter Notes:**  
+> - Use `brightness` (0–255), NOT `brightness_pct`  
+> - Use `rgb_color` for accent entities, NOT `hs_color` (causes pulsing)  
+> - Use `color_temp_kelvin` for white entities  
+> - Always set `effect: "none"` on accent entities to prevent stuck effects  
+> - Accent entities are hidden by integration but fully functional
 
-**Labels:** thermostat, homekit_device, motion_sensor, temperature_sensor, humidity_sensor
+### Switches
 
-> **Note:** The ecobee also has built-in motion, temperature, and humidity sensors exposed via HomeKit. The device is registered under the Entry area but the entity `climate.entry` was previously unassigned — now corrected.
+**Zooz ZEN71 (Z-Wave, node 267)**
+| Entity ID | Description |
+|-----------|-------------|
+| `switch.entry_main` | Primary on/off (Smart Switch Mode: local + Z-Wave disabled) |
+| `event.entry_main_scene_001` | Scene event (up paddle) |
+| `event.entry_main_scene_002` | Scene event (down paddle) |
+| `event.entry_main_scene_003` | Scene event (config button) |
+| `select.entry_main_scene_control` | Enable/disable scene events |
+| `select.entry_main_smart_switch_mode` | Smart switch relay mode |
+| `sensor.entry_main_node_status` | Z-Wave node alive/dead status |
+| `button.entry_main_ping` | Ping Z-Wave node |
+| `button.entry_main_identify` | Identify device |
+| `update.entry_main_firmware` | Firmware update entity (v3.70.0) |
 
----
+### Door Sensors
 
-## Light Groups
+**Entry Garage Door Sensor** — SmartThings Multipurpose Sensor (2018, IM6001-MPP01)  
+Zigbee via Zigbee2MQTT | Labels: `zigbee`, `door_sensor`
+| Entity ID | Description |
+|-----------|-------------|
+| `binary_sensor.entry_garage_door_sensor_contact` | Door open/closed (device_class: door) |
+| `binary_sensor.entry_garage_door_sensor_battery_low` | Low battery alert |
+| `binary_sensor.entry_garage_door_sensor_tamper` | Tamper detection |
+| `binary_sensor.entry_garage_door_sensor_moving` | Movement/vibration detection |
 
-### `light.entry_light_group` — Entry Light Group
+**Entry Side Door Sensor** — Visonic MCT-340 E  
+Zigbee via Zigbee2MQTT | Labels: `zigbee`, `door_sensor`
+| Entity ID | Description |
+|-----------|-------------|
+| `binary_sensor.entry_side_door_sensor_contact` | Door open/closed (device_class: door) |
+| `binary_sensor.entry_side_door_sensor_battery_low` | Low battery alert |
+| `binary_sensor.entry_side_door_sensor_tamper` | Tamper detection |
 
-HA group containing all four ceiling lights. Useful for bulk on/off control, but individual lights must be addressed directly for specific brightness, color temp, or RGB settings due to differing color mode capabilities.
+### Motion Sensor
 
-| Member Entity | Color Mode | Capabilities |
-|---|---|---|
-| `light.entry_ceiling_north` | `color_temp` | 2702K–6535K (warm to daylight) |
-| `light.entry_ceiling_north_2` | `hs` | Full RGB via `rgb_color`, no color temp |
-| `light.entry_ceiling_south` | `color_temp` | 2702K–6535K (warm to daylight) |
-| `light.entry_ceiling_south_2` | `hs` | Full RGB via `rgb_color`, no color temp |
+**Fibaro FGMS001** (Z-Wave, node 11, FW: v3.3)
+| Entity ID | Description |
+|-----------|-------------|
+| `binary_sensor.entry_motion_motion_detection` | Motion trigger (automation trigger) |
+| `sensor.entry_motion_temperature` | Temperature reading |
+| `sensor.entry_motion_illuminance` | Light level (lux) |
+| `sensor.entry_motion_seismic_intensity` | Vibration/seismic |
+| `sensor.entry_motion_air_temperature` | Air temperature |
+| `sensor.entry_motion_battery_level` | Battery % |
 
-> **Important:** The `_2` entities are the RGB channel of the same physical fixture. Each Aqara ceiling light exposes two HA entities — one for white/color temp, one for HS color.
+### Remotes
 
----
+**Zooz ZEN34** (Z-Wave, battery, x2)
+| Device | Node | Entities |
+|--------|------|----------|
+| Entry Remote North | 268 | Scene events, battery, node status, FW update, ping, identify |
+| Entry Remote South | 271 | Scene events, battery, node status, FW update, ping, identify |
 
-## Lights
+### Climate
 
-### Entry Ceiling North
+**ecobee ECB501** (HomeKit integration)  
+Serial: 421883660639 | FW: v4.10.80256
+| Entity ID | Description |
+|-----------|-------------|
+| `climate.entry` | HVAC control (off/heat/cool/heat_cool), 45–92°F, fan on/auto |
 
-| Property | Value |
-|---|---|
-| **Device** | Aqara Colorful Ceiling Light 36W |
-| **Protocol** | Matter |
-| **Manufacturer** | Aqara |
-| **Serial** | 54ef441000c0a6cd |
-| **Firmware** | v26 |
-| **Area** | Entry |
+Built-in sensors: motion, temperature, humidity (via HomeKit)
 
-| Entity ID | Color Mode | Temp Range | Notes |
-|---|---|---|---|
-| `light.entry_ceiling_north` | `color_temp` | 2702K–6535K | White channel. Use `brightness` (0–255) and `color_temp_kelvin`. `brightness_pct` is unreliable. |
-| `light.entry_ceiling_north_2` | `hs` | N/A | RGB channel. Use `rgb_color` for stable solid colors. `hs_color` can cause color cycling/pulsing. Set `effect: "none"` to prevent unwanted effects. |
+### Other Devices
 
-### Entry Ceiling South
-
-| Property | Value |
-|---|---|
-| **Device** | Aqara Colorful Ceiling Light 36W |
-| **Protocol** | Matter |
-| **Manufacturer** | Aqara |
-| **Serial** | 54ef441000cbd63e |
-| **Firmware** | v26 |
-| **Area** | Entry |
-
-| Entity ID | Color Mode | Temp Range | Notes |
-|---|---|---|---|
-| `light.entry_ceiling_south` | `color_temp` | 2702K–6535K | White channel. Same behavior as North. |
-| `light.entry_ceiling_south_2` | `hs` | N/A | RGB channel. Same behavior as North_2. |
-
-### Aqara Light Gotchas
-
-- **`brightness_pct` is unreliable** — always use `brightness` (0–255 scale) for consistent results
-- **`hs_color` causes pulsing/cycling** on the HS-mode entities — use `rgb_color` instead for solid colors
-- **`effect: "none"`** should be set when using RGB to prevent unwanted color cycling
-- Each physical fixture exposes **two entities** (white channel + RGB channel) via Matter
-
----
-
-## Switches
-
-### Entry Main — `switch.entry_main_2`
-
-| Property | Value |
-|---|---|
-| **Device** | Zooz ZEN71 (On/Off Switch) |
-| **Protocol** | Z-Wave |
-| **Manufacturer** | Zooz |
-| **Firmware** | v3.70.0 |
-| **Z-Wave Node** | 267 |
-| **Area** | Entry |
-| **Smart Switch Mode** | Local and Z-Wave control disabled |
-
-**Entities:**
-
-| Entity ID | Type | Description |
-|---|---|---|
-| `switch.entry_main_2` | switch | Primary on/off control |
-| `event.entry_main_scene_001_2` | event | Scene 001 (paddle up) |
-| `event.entry_main_scene_002_2` | event | Scene 002 (paddle down) |
-| `event.entry_main_scene_003_2` | event | Scene 003 |
-| `select.entry_main_scene_control_2` | select | Scene control enable/disable |
-| `select.entry_main_smart_switch_mode_2` | select | Smart switch mode config |
-| `sensor.entry_main_node_status_2` | sensor | Z-Wave node status |
-| `update.entry_main_firmware_2` | update | Firmware update entity |
-| `button.entry_main_ping_2` | button | Z-Wave ping |
-| `button.entry_main_identify_2` | button | Identify device |
-
----
-
-## Remotes
-
-### Entry Remote North
-
-| Property | Value |
-|---|---|
-| **Device** | Zooz ZEN34 (Remote Switch) |
-| **Protocol** | Z-Wave (battery) |
-| **Manufacturer** | Zooz |
-| **Firmware** | v2.0.2 |
-| **Z-Wave Node** | 268 |
-| **Area** | Entry |
-
-**Entities:**
-
-| Entity ID | Type | Description |
-|---|---|---|
-| `event.entry_remote_north_scene_001` | event | Scene 001 (button press) |
-| `event.entry_remote_north_scene_002` | event | Scene 002 (button press) |
-| `sensor.entry_remote_north_battery_level` | sensor | Battery level (%) |
-| `sensor.entry_remote_north_node_status` | sensor | Z-Wave node status |
-| `update.entry_remote_north_firmware` | update | Firmware update entity |
-| `button.entry_remote_north_ping` | button | Z-Wave ping |
-| `button.entry_remote_north_identify` | button | Identify device |
-
-### Entry Remote South
-
-| Property | Value |
-|---|---|
-| **Device** | Zooz ZEN34 (Remote Switch) |
-| **Protocol** | Z-Wave (battery) |
-| **Manufacturer** | Zooz |
-| **Firmware** | v2.0.2 |
-| **Z-Wave Node** | 271 |
-| **Area** | Entry |
-
-**Entities:**
-
-| Entity ID | Type | Description |
-|---|---|---|
-| `event.entry_remote_south_scene_001` | event | Scene 001 (button press) |
-| `event.entry_remote_south_scene_002` | event | Scene 002 (button press) |
-| `sensor.entry_remote_south_battery_level` | sensor | Battery level (%) |
-| `sensor.entry_remote_south_node_status` | sensor | Z-Wave node status |
-| `update.entry_remote_south_firmware` | update | Firmware update entity |
-| `button.entry_remote_south_ping` | button | Z-Wave ping |
-| `button.entry_remote_south_identify` | button | Identify device |
-
----
-
-## Sensors
-
-### Entry Motion — Fibaro FGMS001
-
-| Property | Value |
-|---|---|
-| **Device** | Fibaro FGMS001 (Motion Sensor) |
-| **Protocol** | Z-Wave (battery) |
-| **Manufacturer** | Fibargroup |
-| **Firmware** | v3.3 |
-| **Z-Wave Node** | 11 |
-| **Area** | Entry |
-
-**Entities:**
-
-| Entity ID | Type | Description |
-|---|---|---|
-| `binary_sensor.entry_motion_motion_detection` | binary_sensor | Motion detected (on/off) |
-| `sensor.entry_motion_air_temperature` | sensor | Temperature (°F) |
-| `sensor.entry_motion_illuminance` | sensor | Light level (lx) |
-| `sensor.entry_motion_seismic_intensity` | sensor | Vibration/seismic intensity |
-| `sensor.entry_motion_acceleration_x_axis` | sensor | Accelerometer X (m/s²) |
-| `sensor.entry_motion_acceleration_y_axis` | sensor | Accelerometer Y (m/s²) |
-| `sensor.entry_motion_acceleration_z_axis` | sensor | Accelerometer Z (m/s²) |
-| `binary_sensor.entry_motion_tampering_product_cover_removed` | binary_sensor | Tamper detection |
-| `sensor.entry_motion_battery_level` | sensor | Battery level (%) |
-| `sensor.entry_motion_node_status` | sensor | Z-Wave node status |
-| `update.entry_motion_firmware` | update | Firmware update entity |
-| `button.entry_motion_ping` | button | Z-Wave ping |
-
----
-
-## Other Devices
-
-### Entry Tablet
-
-| Entity ID | Type | Description |
-|---|---|---|
-| `device_tracker.2605_4a80_2101_cf31_656c_15d5_e8e3_56f4_dynamic_midco_net` | device_tracker | Tablet presence |
-| `binary_sensor.entry_tablet_connectivity` | binary_sensor | Network connectivity |
-| `switch.entry_tablet_do_not_disturb` | switch | DND toggle |
-
-### Entry Door (Ring)
-
-| Entity ID | Type | Description |
-|---|---|---|
-| `device_tracker.ring_entry_door` | device_tracker | Ring doorbell presence |
-| `binary_sensor.side_door_ding` | binary_sensor | Doorbell ding event |
-
----
+| Device | Key Entities |
+|--------|--------------|
+| Entry Tablet | `device_tracker`, connectivity sensor, DND switch |
+| Ring Entry Door | `binary_sensor.side_door_ding`, cameras, motion, battery |
 
 ## Automations
 
-### Entry Motion Automation
+- **[Entry Motion Automation](automations/entry_motion.yaml)** — Staggered multi-light response to motion detection (sunset–sunrise)
 
-Motion-triggered staggered lighting for the entry area. Each ceiling light turns on with independent brightness, color, and timeout settings, creating a gradual fade-out effect as lights shut off one by one.
+## Protocols
 
-See [`automations/entry_motion.yaml`](automations/entry_motion.yaml) for the full configuration.
-
-**Trigger:** `binary_sensor.entry_motion_motion_detection` → `on`
-**Condition:** After sunset / before sunrise
-**Mode:** `restart` (re-trigger resets all timers)
-
-| Light | Brightness | Color | Timeout |
-|---|---|---|---|
-| `entry_ceiling_north` | 75% (191/255) | 2702K warm white | 2 min |
-| `entry_ceiling_north_2` | 100% (255/255) | Blue (rgb 0,0,255) | 5 min |
-| `entry_ceiling_south` | 100% (255/255) | 6535K daylight | 10 min |
-| `entry_ceiling_south_2` | 100% (255/255) | Blue (rgb 0,0,255) | 15 min |
+| Protocol | Devices |
+|----------|---------|
+| Matter | Aqara ceiling lights (x2) |
+| Z-Wave | Zooz ZEN71 switch, ZEN34 remotes (x2), Fibaro motion sensor |
+| Zigbee (Z2M) | SmartThings door sensor, Visonic door sensor |
+| HomeKit | ecobee thermostat |
+| Ring | Entry Door doorbell |

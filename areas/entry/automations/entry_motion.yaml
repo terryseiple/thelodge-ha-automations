@@ -1,39 +1,39 @@
 # Entry Motion Automation
-# Staggered entry lighting on motion detection
-# Each light has independent brightness, color, and timeout
-#
-# Trigger: Entry motion sensor detects motion
-# Condition: After sunset / before sunrise (adapts seasonally)
+# Triggered by: Fibaro FGMS001 motion sensor
+# Condition: Sun below horizon (sunset to sunrise)
 # Mode: restart (re-trigger resets all timers)
 #
-# Light schedule:
-#   North (white):  75% brightness, 2702K warm, 2 min timeout
-#   North_2 (RGB):  100% brightness, blue, 5 min timeout
-#   South (white):  100% brightness, 6535K daylight, 10 min timeout
-#   South_2 (RGB):  100% brightness, blue, 15 min timeout
+# Staggered lighting pattern:
+#   North (color_temp):  50% brightness, warm white, 2 min timeout
+#   North Accent (hs):   100% brightness, yellow RGB, 5 min timeout
+#   South (color_temp):  100% brightness, warm white, 10 min timeout
+#   South Accent (hs):   100% brightness, yellow RGB, 15 min timeout
 
 id: entry_motion_automation
 alias: Entry Motion Automation
 description: >-
-  Staggered entry lighting on motion detection. Each light has independent
-  brightness, color, and timeout.
-triggers:
+  Staggered entry lighting on motion detection.
+  Each light has independent brightness, color, and timeout.
+
+trigger:
   - trigger: state
     entity_id: binary_sensor.entry_motion_motion_detection
     to: "on"
-conditions:
+
+condition:
   - condition: sun
     after: sunset
     before: sunrise
-actions:
+
+action:
   - parallel:
-      # North ceiling - warm white, 75% brightness, 2 min
+      # North ceiling - color_temp mode, dim warm white, short timeout
       - sequence:
           - action: light.turn_on
             target:
               entity_id: light.entry_ceiling_north
             data:
-              brightness: 191
+              brightness: 128
               color_temp_kelvin: 2702
           - delay:
               minutes: 2
@@ -41,47 +41,48 @@ actions:
             target:
               entity_id: light.entry_ceiling_north
 
-      # North ceiling 2 (RGB) - blue, 100% brightness, 5 min
+      # North ceiling accent - hs mode, yellow RGB, medium timeout
       - sequence:
           - action: light.turn_on
             target:
-              entity_id: light.entry_ceiling_north_2
+              entity_id: light.entry_ceiling_north_accent
             data:
               brightness: 255
-              rgb_color: [0, 0, 255]
+              rgb_color: [255, 255, 0]
               effect: "none"
           - delay:
               minutes: 5
           - action: light.turn_off
             target:
-              entity_id: light.entry_ceiling_north_2
+              entity_id: light.entry_ceiling_north_accent
 
-      # South ceiling - daylight white, 100% brightness, 10 min
+      # South ceiling - color_temp mode, full warm white, long timeout
       - sequence:
           - action: light.turn_on
             target:
               entity_id: light.entry_ceiling_south
             data:
               brightness: 255
-              color_temp_kelvin: 6535
+              color_temp_kelvin: 2702
           - delay:
               minutes: 10
           - action: light.turn_off
             target:
               entity_id: light.entry_ceiling_south
 
-      # South ceiling 2 (RGB) - blue, 100% brightness, 15 min
+      # South ceiling accent - hs mode, yellow RGB, longest timeout
       - sequence:
           - action: light.turn_on
             target:
-              entity_id: light.entry_ceiling_south_2
+              entity_id: light.entry_ceiling_south_accent
             data:
               brightness: 255
-              rgb_color: [0, 0, 255]
+              rgb_color: [255, 255, 0]
               effect: "none"
           - delay:
               minutes: 15
           - action: light.turn_off
             target:
-              entity_id: light.entry_ceiling_south_2
+              entity_id: light.entry_ceiling_south_accent
+
 mode: restart
