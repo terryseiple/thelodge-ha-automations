@@ -14,7 +14,15 @@ TheLodge runs Home Assistant in a Docker container on Unraid, using the [package
 | **Home Assistant** | Docker container |
 | **Audio System** | Jukebox Server (Docker, 10.0.101.52) → WiiM Ultra (LinkPlay, 10.0.102.31) → HTD Lync 12 multi-zone amp |
 | **Networking** | Macvlan (br0) for container isolation, AdGuard DNS, Nginx Proxy Manager |
-| **IoT** | Zigbee2MQTT, Z-Wave, WiFi switches/sensors |
+| **IoT** | Zigbee2MQTT, Z-Wave, WiFi switches/sensors, Matter |
+
+## Areas
+
+Area-based documentation for all entities, groups, devices, and automations organized by room/zone.
+
+| Area | Devices | Automations | Description |
+|---|---|---|---|
+| [Entry](areas/entry/) | 4 lights, 1 switch, 2 remotes, 1 motion sensor | Entry Motion | Staggered motion-triggered lighting with Aqara Matter lights, Zooz Z-Wave switches |
 
 ## Package Categories
 
@@ -28,7 +36,9 @@ Automations involving the Jukebox server, WiiM Ultra, HTD Lync amp zones, and sp
 
 ### 💡 Lighting
 
-*Coming soon* — Automations for interior/exterior lighting scenes, motion-triggered lights, and schedule-based controls.
+| Package | Description |
+|---|---|
+| [entry_motion.yaml](areas/entry/automations/entry_motion.yaml) | Staggered entry lighting on motion detection with per-light brightness, color, and timeout |
 
 ### 🌡️ Climate
 
@@ -53,6 +63,7 @@ Automations involving the Jukebox server, WiiM Ultra, HTD Lync amp zones, and sp
 
 ## Notes
 
+- **Aqara Matter Lights**: Each fixture exposes two HA entities — one for white/color temp (`color_temp` mode) and one for RGB (`hs` mode). Use `brightness` (0–255) instead of `brightness_pct`, and `rgb_color` instead of `hs_color` for stable solid colors.
 - **WiiM REST API**: These packages communicate with WiiM devices via the LinkPlay HTTP API (`/httpapi.asp`). Your WiiM device must be accessible on your network.
 - **Jukebox Server**: A custom Docker container running nginx that serves MP3 files and M3U playlists. Audio is downloaded via yt-dlp in a companion container.
 - **HTD Lync Zones**: Controlled through Home Assistant `media_player` entities via the Juke integration.
