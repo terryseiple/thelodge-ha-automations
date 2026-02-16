@@ -6,7 +6,7 @@
 #   When the master bathroom shower switch turns on, this automation:
 #   1. Turns on the ceiling exhaust fan
 #   2. Mutes all other audio zones in the house
-#   3. Sets the master bathroom zone to 25% volume
+#   3. Sets the master bathroom zone to 20% volume
 #   4. Sets the WiiM Ultra to 80% volume with shuffle enabled
 #   5. Plays a curated M3U playlist from the Jukebox server
 #
@@ -98,12 +98,12 @@ automation:
         data:
           volume_level: 0
 
-      # Set Master Bathroom zone to 25%
+      # Set Master Bathroom zone to 20%
       - service: media_player.volume_set
         target:
           entity_id: media_player.the_lodge_juke_master_bathroom_zone
         data:
-          volume_level: 0.25
+          volume_level: 0.20
 
       # Set WiiM volume to 80%
       - service: rest_command.wiim_set_volume
