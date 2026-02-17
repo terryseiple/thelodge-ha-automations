@@ -13,6 +13,7 @@ TheLodge runs Home Assistant in a Docker container on Unraid, using the [package
 | **Server** | Unraid (10.0.101.3) |
 | **Home Assistant** | Docker container |
 | **Audio System** | Jukebox Server (Docker, 10.0.101.52) → WiiM Ultra (LinkPlay, 10.0.102.31) → HTD Lync 12 multi-zone amp |
+| **lodge-ops** | Utility container (10.0.101.58) — Flask APIs, scripts, SSH, direct device control |
 | **Networking** | Macvlan (br0) for container isolation, AdGuard DNS, Nginx Proxy Manager |
 | **IoT** | Zigbee2MQTT, Z-Wave, WiFi switches/sensors, Matter |
 
@@ -32,6 +33,8 @@ Automations involving the Jukebox server, WiiM Ultra, HTD Lync amp zones, and sp
 
 | Package | Description |
 |---|---|
+| [juke_volume_ramp](packages/media/juke_volume_ramp.md) | ZEN71 hold-to-ramp volume control — direct Juke API via lodge-ops Flask service, 6 zones |
+| [juke_api.py](packages/media/juke_api.py) | Flask API for Juke volume control (runs on lodge-ops at 10.0.101.58:5111) |
 | [shower_music.yaml](packages/media/shower_music.yaml) | Master bathroom shower music system with multi-zone muting and timed shutoff |
 
 ### 💡 Lighting
@@ -63,6 +66,7 @@ Automations involving the Jukebox server, WiiM Ultra, HTD Lync amp zones, and sp
 
 ## Notes
 
+- **lodge-ops**: The utility container at `10.0.101.58` runs Flask APIs and Python scripts that talk directly to device APIs (Juke, WiiM, etc.) bypassing HA overhead. Used when real-time responsiveness matters more than HA's abstraction layer.
 - **Aqara Matter Lights**: Each fixture exposes two HA entities — one for white/color temp (`color_temp` mode) and one for RGB (`hs` mode). Use `brightness` (0–255) instead of `brightness_pct`, and `rgb_color` instead of `hs_color` for stable solid colors.
 - **WiiM REST API**: These packages communicate with WiiM devices via the LinkPlay HTTP API (`/httpapi.asp`). Your WiiM device must be accessible on your network.
 - **Jukebox Server**: A custom Docker container running nginx that serves MP3 files and M3U playlists. Audio is downloaded via yt-dlp in a companion container.
