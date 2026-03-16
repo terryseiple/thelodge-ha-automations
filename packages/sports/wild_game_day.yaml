@@ -1,0 +1,22 @@
+# Minnesota Wild Game Day Automations
+# Requires: TeamTracker integration with sensor.minnesota_wild
+# 
+# Automations:
+#   1. wild_goal_light_celebration - Flash kitchen green on Wild goals
+#   2. wild_game_day_kitchen_theme - Set kitchen accent lights green during pregame
+#   3. wild_game_over_restore - Restore kitchen lights after game ends
+#
+# Sensor states: PRE (pregame), IN (in progress), POST (game over)
+# Team colors: #124734 (forest green), #ae122a (red)
+# RGBW equivalent: [18, 71, 52, 0]
+#
+# Entities used:
+#   - sensor.minnesota_wild (TeamTracker)
+#   - light.kitchen_ceiling_light_group (9 RGBW lights, flash on goals)
+#   - light.kitchen_accent_light_group (ambient green during games)
+#
+# Goal celebration sequence:
+#   1. Save current light state via scene snapshot
+#   2. Flash Wild green 5 times (400ms on, 300ms off)
+#   3. Hold solid Wild green for 10 seconds
+#   4. Restore previous light state
