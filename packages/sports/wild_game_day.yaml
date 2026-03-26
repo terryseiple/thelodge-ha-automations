@@ -5,30 +5,27 @@
 #   1. wild_goal_light_celebration        - Flash kitchen LEDs green on Wild goals
 #   2. wild_game_day_kitchen_theme        - Set kitchen accent lights green during pregame
 #   3. wild_game_over_kitchen_restore     - Restore kitchen lights after game ends
-#   4. wild_game_day_activity_room_theme  - Govee Hex+Glide alternating green/gold at 7:30 AM on game days
+#   4. wild_game_day_activity_room_theme  - Govee Hex+Glide at 7:30 AM on game days
 #   5. wild_game_over_activity_room_restore - Turn off Hex+Glide at 11:00 PM on game days
 #
 # Sensor states: PRE (pregame), IN (in progress), POST (game over)
 #
-# Team colors (Pantone-matched):
-#   Pantone 349 C  - Forest Green  #124734  RGB(18, 71, 52)
-#   Pantone 7406 C - Gold          #F0B528  RGB(240, 181, 40)
-#   Pantone 200 C  - Red           #ae122a  (accent, not used in lighting currently)
+# Team colors (Pantone-matched, device-calibrated):
+#   Pantone 349 C  - Forest Green  #124734  RGB(18,71,52)   [kitchen/goal LEDs]
+#   Pantone 349 C  - Corrected     -        RGB(40,110,15)  [Govee Hex+Glide, compensates blue shift]
+#   Pantone 7406 C - Gold          #F0B528  RGB(240,181,40)
 #
-# Entities used:
-#   Kitchen:
-#   - light.kitchen_ceiling_light_group  (RGBW, goal flash)
-#   - light.kitchen_accent_light_group   (ambient green during games)
-#   Activity Room:
-#   - light.terry_s_office_hex           (Govee Hex, 21 addressable segments)
-#   - light.terry_s_office_glide         (Govee Glide, 28 addressable segments)
+# Activity Room entities:
+#   - light.terry_s_office_hex    (Govee Hex, 21 segs, odd=green/even=gold alternating)
+#   - light.terry_s_office_glide  (Govee Glide, 28 segs, L-shape 34"x34",
+#                                   vertical leg 001-014, horizontal bar 015-028,
+#                                   gold blocks: 002-003,006-007,010-011 / 018-019,022-023,026-027)
+#
+# Glide note: Govee BLE throttles rapid segment commands. Pattern applied via
+#   two sequenced scripts (wild_game_day_glide_pattern_1/2) with 1s delays.
+#   Automation fires part 1, waits 16s, then fires part 2.
 #
 # Activity Room trigger model:
 #   ON  - Time-based: 7:30 AM, condition: sensor state PRE or IN
 #   OFF - Time-based: 11:00 PM, condition: sensor state PRE, IN, or POST
-#   These fixtures do NOT participate in goal flash celebrations.
-#
-# Kitchen/goal trigger model:
-#   ON  - Sensor PRE state transition
-#   OFF - Sensor POST state transition (5 min delay)
-#   Goal flash - Sensor team_score increase while IN
+#   No goal flash on these fixtures.
