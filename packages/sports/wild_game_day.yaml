@@ -1,33 +1,34 @@
 # Minnesota Wild Game Day Automations
 # Requires: TeamTracker integration with sensor.minnesota_wild
-# 
+#
 # Automations:
-#   1. wild_goal_light_celebration - Flash kitchen green on Wild goals
-#   2. wild_game_day_kitchen_theme - Set kitchen accent lights green during pregame
-#   3. wild_game_over_restore - Restore kitchen lights after game ends
+#   1. wild_goal_light_celebration        - Flash kitchen LEDs green on Wild goals
+#   2. wild_game_day_kitchen_theme        - Set kitchen accent lights green during pregame
+#   3. wild_game_over_kitchen_restore     - Restore kitchen lights after game ends
+#   4. wild_game_day_activity_room_theme  - Govee Hex+Glide alternating green/gold at 7:30 AM on game days
+#   5. wild_game_over_activity_room_restore - Turn off Hex+Glide at 11:00 PM on game days
 #
 # Sensor states: PRE (pregame), IN (in progress), POST (game over)
-# Team colors: #124734 (forest green), #ae122a (red)
-# RGBW equivalent: [18, 71, 52, 0]
+#
+# Team colors (Pantone-matched):
+#   Pantone 349 C  - Forest Green  #124734  RGB(18, 71, 52)
+#   Pantone 7406 C - Gold          #F0B528  RGB(240, 181, 40)
+#   Pantone 200 C  - Red           #ae122a  (accent, not used in lighting currently)
 #
 # Entities used:
-#   - sensor.minnesota_wild (TeamTracker)
-#   - light.kitchen_ceiling_light_group (9 RGBW lights, flash on goals)
-#   - light.kitchen_accent_light_group (ambient green during games)
+#   Kitchen:
+#   - light.kitchen_ceiling_light_group  (RGBW, goal flash)
+#   - light.kitchen_accent_light_group   (ambient green during games)
+#   Activity Room:
+#   - light.terry_s_office_hex           (Govee Hex, 21 addressable segments)
+#   - light.terry_s_office_glide         (Govee Glide, 28 addressable segments)
 #
-# Goal celebration sequence:
-#   1. Save current light state via scene snapshot
-#   2. Flash Wild green 5 times (400ms on, 300ms off)
-#   3. Hold solid Wild green for 10 seconds
-#   4. Restore previous light state
-#   4. wild_game_day_activity_room_theme - Alternating Wild green/gold segments on Hex+Glide at pregame
-#   5. wild_game_over_activity_room_restore - Restore Hex+Glide to warm white after game
+# Activity Room trigger model:
+#   ON  - Time-based: 7:30 AM, condition: sensor state PRE or IN
+#   OFF - Time-based: 11:00 PM, condition: sensor state PRE, IN, or POST
+#   These fixtures do NOT participate in goal flash celebrations.
 #
-# Activity Room color pattern:
-#   Pantone 349 C green (#124734, RGB 18,71,52) on odd segments
-#   Pantone 7406 C gold (#F0B528, RGB 240,181,40) on even segments
-#   Hex: 21 segments (001-021), Glide: 28 segments (001-028)
-#
-# Additional entities:
-#   - light.terry_s_office_hex (Activity Room Hex, 21 addressable segments)
-#   - light.terry_s_office_glide (Activity Room Wall Glide, 28 addressable segments)
+# Kitchen/goal trigger model:
+#   ON  - Sensor PRE state transition
+#   OFF - Sensor POST state transition (5 min delay)
+#   Goal flash - Sensor team_score increase while IN
