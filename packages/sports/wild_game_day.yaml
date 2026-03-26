@@ -20,3 +20,14 @@
 #   2. Flash Wild green 5 times (400ms on, 300ms off)
 #   3. Hold solid Wild green for 10 seconds
 #   4. Restore previous light state
+#   4. wild_game_day_activity_room_theme - Alternating Wild green/gold segments on Hex+Glide at pregame
+#   5. wild_game_over_activity_room_restore - Restore Hex+Glide to warm white after game
+#
+# Activity Room color pattern:
+#   Pantone 349 C green (#124734, RGB 18,71,52) on odd segments
+#   Pantone 7406 C gold (#F0B528, RGB 240,181,40) on even segments
+#   Hex: 21 segments (001-021), Glide: 28 segments (001-028)
+#
+# Additional entities:
+#   - light.terry_s_office_hex (Activity Room Hex, 21 addressable segments)
+#   - light.terry_s_office_glide (Activity Room Wall Glide, 28 addressable segments)
